@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/param.h>
 
 /************Private include**********************************************/
 #include "tsh.h"
@@ -68,6 +71,11 @@ main(int argc, char *argv[])
     {
       /* read command line */
       getCommandLine(&cmdLine, BUFSIZE);
+      
+      if (strstr(cmdLine, "exit") == cmdLine)
+      {
+	break;
+      }
 
       /* checks the status of background jobs */
       CheckJobs();
