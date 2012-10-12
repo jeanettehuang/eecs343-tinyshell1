@@ -70,7 +70,7 @@
 
 #define NBUILTINCOMMANDS (sizeof BuiltInCmds / sizeof(char*))
 
-char* BuiltInCmds[3] = {"echo","exit","cd"};
+char* BuiltInCmds[4] = {"echo","pwd","exit","cd"};
 
 typedef struct bgjob_l
 {
@@ -311,6 +311,13 @@ RunBuiltInCmd(commandT* cmd) {
   // Implementation of exit
   if (strcmp(cmd->argv[0], "exit") == 0) {
     return;
+  }
+
+  // Implementation of pwd
+  if (strcmp(cmd->argv[0], "pwd") == 0) {
+    char cwd[256];
+    getcwd(cwd, 256);
+    Print(cwd);
   }
 
   // Implementation of cd 
