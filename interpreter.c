@@ -94,9 +94,7 @@ void
 Interpret(char* cmdLine)
 {
   commandT* cmd = getCommand(cmdLine);
-
   RunCmd(cmd);
-
   freeCommand(cmd);
 } /* Interpret */
 
@@ -124,7 +122,8 @@ getCommand(char* cmdLine)
   cmd->argv[0] = 0;
   cmd->name = 0;
   cmd->argc = 0;
-
+  cmd->path = NULL;
+  
   int i, inArg = 0;
   char quote = 0;
   char escape = 0;
@@ -262,6 +261,13 @@ freeCommand(commandT* cmd)
   int i;
 
   cmd->name = 0;
+  cmd->path = 0;
+
+  if (cmd->path != cmd->name) {
+    if (cmd->path != NULL) {
+      free(cmd->path);
+    }
+  }
   for (i = 0; cmd->argv[i] != 0; i++)
     {
       free(cmd->argv[i]);

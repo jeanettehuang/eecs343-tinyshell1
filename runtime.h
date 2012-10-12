@@ -59,6 +59,7 @@
 typedef struct command_t
 {
   char* name;
+  char* path;
   int argc;
   char* argv[];
 } commandT;
