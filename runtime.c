@@ -322,11 +322,62 @@ RunBuiltInCmd(commandT* cmd) {
 
   // Implementation of cd 
   if (strcmp(cmd->argv[0], "cd") == 0) {
-    if (cmd->argv[1] != NULL) {
-      // cd error
-      if (chdir(cmd->argv[1]) == -1) {
-	perror("Error: cd failed");
+    // No arguments given to cd, chdir home dir
+    if (cmd->argc == 1) {
+      chdir(getenv("HOME"));
+    }
+    else if (cmd->argc == 2) {
+      char path[1024];
+      char updatedpath[1024];
+      int first = 0;
+      int second = 0;
+
+      getcwd(path,256);
+
+      // Arg given was ~, looking for home dir
+      if (cmd->argv[1][0] == '~') {
+        chdir(getenv("HOME"));
       }
+      // Arg given to cd was not an absolute path, so just
+      // change dir to current path concatenated with /arg
+      if ((cmd->argv)[1][0] != '.' && (cmd->argv)[1][0] != '/') {
+        strcat(path, "/");
+        strcat(path,cmd->argv[1]);
+        chdir(path);
+      }
+      // We need to go up a dir
+      while(cmd->argv[1][first] == '.' && cmd->argv[1][second] == '.') {
+        int isslash = 0;
+        int pos = strlen(path)-1;
+        for(; pos >= 0; pos--) {
+          if(!isslash) {
+          // We currently at a slash in our path
+            if(path[pos] == '/') {
+              updatedpath[pos] = 0;
+              isslash = 1;
+            }
+          }
+        else {
+          updatedpath[pos] = path[pos];
+        }
+      }
+      chdir(updatedpath);
+      if(second+1 >= strlen(cmd->argv[1])) {
+        break;
+      }
+      if(cmd->argv[1][second+1] == '/') {
+        first += 3;
+        second += 3;
+      }
+      else {
+        break;
+      }
+      strcpy(path, updatedpath);
+      }
+    }
+    // cd given more than one argument
+    else {
+      perror("Error: cd has too many arguments");
     }
   }
 
