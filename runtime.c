@@ -50,6 +50,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -81,6 +82,9 @@ typedef struct bgjob_l
 /* the pids of the background processes */
 bgjobL *bgjobs = NULL;
 
+/* fg child pid */
+pid_t fgChildPid = 0;
+
 /************Function Prototypes******************************************/
 /* run command */
 static void
@@ -93,13 +97,19 @@ static bool
 ResolveExternalCmd(commandT*);
 /* forks and runs a external program */
 static void
-Exec(commandT*, bool);
+Exec(char*, commandT*, bool);
 /* runs a builtin command */
 static void
 RunBuiltInCmd(commandT*);
 /* checks whether a command is a builtin command */
 static bool
 IsBuiltIn(char*);
+/* checks whether a file exists and is executable */
+static bool
+existsAndExecutable(char*);
+/* Parses the PATH env var pathnames returns the complete file path for a file */
+char*
+getCompleteFilePath(char*);
 /************External Declaration*****************************************/
 
 /**************Implementation***********************************************/
@@ -231,10 +241,10 @@ RunCmdRedirIn(commandT* cmd, char* file)
  * Tries to run an external command.
  */
 static void
-RunExternalCmd(commandT* cmd, bool fork)
-{
-  if (ResolveExternalCmd(cmd))
-    Exec(cmd, fork);
+RunExternalCmd(commandT* cmd, bool fork){
+  if (ResolveExternalCmd(cmd)) {
+    Exec(cmd->name,cmd,fork);
+  }
 }  /* RunExternalCmd */
 
 
@@ -249,8 +259,15 @@ RunExternalCmd(commandT* cmd, bool fork)
  * Determines whether the command to be run actually exists.
  */
 static bool
-ResolveExternalCmd(commandT* cmd)
-{
+ResolveExternalCmd(commandT* cmd) {
+  char* completeFilePath = getCompleteFilePath(cmd->name);
+
+  if (completeFilePath != NULL) {
+    cmd->name = completeFilePath;
+    return TRUE;
+  }
+
+  free(completeFilePath);
   return FALSE;
 } /* ResolveExternalCmd */
 
@@ -267,9 +284,37 @@ ResolveExternalCmd(commandT* cmd)
  * Executes a command.
  */
 static void
-Exec(commandT* cmd, bool forceFork)
-{
+Exec(char* path, commandT* cmd, bool forceFork) {
+  if(forceFork) {
+    int status;
+
+    // Create child process
+    pid_t pid = fork();
+
+    if (pid < 0) {
+      Print("Error: Could not create new process");
+    }
+    // Child process executes this code
+    else if (pid == 0) {
+      setpgid(0, 0);
+      execv(path,cmd->argv);
+      fflush(stdout);
+      _exit(0);
+    }
+    // Parent process executes this code
+    else {
+    do {
+      waitpid(pid, &status, 0);
+    }
+    while(!WIFEXITED(status));
+      fflush(stdout);
+    }
+  }
+  else {
+    execv(path,cmd->argv);
+  }
 } /* Exec */
+
 
 
 /*
@@ -377,7 +422,7 @@ RunBuiltInCmd(commandT* cmd) {
     }
     // cd given more than one argument
     else {
-      perror("Error: cd has too many arguments");
+      Print("Error: cd has too many arguments");
     }
   }
 
@@ -402,6 +447,121 @@ RunBuiltInCmd(commandT* cmd) {
 
 } /* RunBuiltInCmd */
 
+/*
+ * getCurrentWorkingDir
+ *
+ * arguments: none
+ *
+ * returns: char*: a pointer to a string that contains the current working dir
+ *
+ * Gets the current working directory
+ */
+ char* getCurrentWorkingDir() {
+  char* currentWorkingDir = malloc(sizeof(char*)*PATH_MAX);
+
+  if (getcwd(currentWorkingDir, PATH_MAX) == NULL) {
+    free(currentWorkingDir);
+    return NULL;
+  }
+
+  return currentWorkingDir;
+ } /* getCurrentWorkingDir*/
+
+/* 
+ * existsAndExecutable
+ *
+ * arguments: char* file_path: the file path of the  file to check
+ *
+ * returns: bool: whether or not the file exists and is executable
+ *
+ * Checks the file to see if it exists and is executable
+ */
+ static bool existsAndExecutable(char* file_path) {
+  struct stat file;
+  if (stat(file_path, &file) == 0) {
+    if ((access(file_path, X_OK) == 0) && S_ISREG(file.st_mode)) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+ } /*existsandExecutable*/
+
+/*
+ * getCompleteFilePath
+ *
+ * arguments: char* file: the file whose full path we want to find
+ *
+ */
+char* getCompleteFilePath(char* file) {
+
+  bool inPath = FALSE;
+  char* paths = getenv("PATH");
+  char* result = malloc(sizeof(char*)*PATH_MAX);
+
+  // Path is an absolute path, do not need to manip path to look up file
+  if (file[0] == '/') {
+    if (existsAndExecutable(file)) {
+       strcpy(result, file);
+        inPath = TRUE;
+    }
+  } 
+  else {
+  // Check if file exists in our homeDir dir
+    char* homeDirPath = malloc(sizeof(char*)*PATH_MAX);
+    char* homeDir = getenv("HOME");
+    strcpy(homeDirPath, homeDir);
+    strcat(homeDirPath, "/");
+    strcat(homeDirPath, file);
+    if (existsAndExecutable(homeDirPath)) {
+      strcpy(result, homeDirPath);
+      inPath = TRUE;
+    } else {
+      // Check if file exists in our current dir
+      char* cwd = getCurrentWorkingDir();
+      char* cwdWithFilename = malloc(sizeof(char*)*PATH_MAX);
+      strcpy(cwdWithFilename, cwd);
+      strcat(cwdWithFilename, "/");
+      strcat(cwdWithFilename, file);
+      if (existsAndExecutable(cwdWithFilename)) {
+        strcpy(result, cwdWithFilename);
+        inPath = TRUE;
+      } 
+      else {
+      // Otherwise see if it exists in any of the folders in our path.
+        char* newPath = malloc(sizeof(char*)*PATH_MAX);
+        strcpy(newPath, paths);
+        char* path = strtok(newPath, ":");
+        while (path != NULL) {
+          char* pathWithFilename = malloc(sizeof(char*)*PATH_MAX);
+          strcpy(pathWithFilename, path);
+          strcat(pathWithFilename, "/");
+          strcat(pathWithFilename, file);
+          if (existsAndExecutable(pathWithFilename)) {
+            strcpy(result, pathWithFilename);
+            inPath = TRUE;
+          }
+          path = strtok(NULL, ":");
+          free(pathWithFilename);
+        }
+        free(newPath);
+      }
+      free(cwdWithFilename);
+      free(cwd);
+    }
+    free(homeDirPath);
+  }
+
+  if (inPath) {
+    return result;
+  } 
+  else {
+    strcpy(result, file);
+    PrintPError(result);
+    free(result);
+    return NULL;
+  }
+
+} /* getCompleteFilePath */
 
 /*
  * CheckJobs
