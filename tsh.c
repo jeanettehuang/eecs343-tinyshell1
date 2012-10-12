@@ -99,6 +99,8 @@ main(int argc, char *argv[])
  * This should handle signals sent to tsh.
  */
 static void
-sig(int signo)
-{
+sig(int signo) {
+  if (signo == SIGINT) {
+    StopFgProc();
+  }
 } /* sig */

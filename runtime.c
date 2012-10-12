@@ -344,6 +344,21 @@ RunBuiltInCmd(commandT* cmd) {
 
 } /* RunBuiltInCmd */
 
+/*
+ * StopFgProc
+ *
+ * args: none
+ *
+ * returns: none
+ *
+ * Stops current fg proc group
+ */
+ void
+ StopFgProc() {
+  if (fgChildPid != 0) {
+    kill(fgChildPid, SIGINT);
+  }
+ }
 
 /*
  * CheckJobs

@@ -71,8 +71,14 @@ typedef struct command_t
  * ---------------------------------------------------------------------
  *    Purpose: Signals that a program exit is required
  ***********************************************************************/
-VAREXTERN(bool forceExit, FALSE)
-;
+VAREXTERN(bool forceExit, FALSE);
+
+/***********************************************************************
+ *  Title: Process ID of foreground child
+ * --------------------------------------------------------------------- 
+ *  Purpose: Stores fg child's PID (defaults to 0 if no fg child)
+ ***********************************************************************/
+VAREXTERN(int fgChildPid, 0);
 
 /************Function Prototypes******************************************/
 
