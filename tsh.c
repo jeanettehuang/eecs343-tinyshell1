@@ -69,17 +69,8 @@ main(int argc, char *argv[])
 
   while (!forceExit) /* repeat forever */
   {
-      char* prompt = getenv("PS1");
-      if (prompt != NULL) {
-	printf("%s", prompt);
-      }
       /* read command line */
       getCommandLine(&cmdLine, BUFSIZE);
-      
-      if (strstr(cmdLine, "exit") == cmdLine)
-      {
-	break;
-      }
 
       /* checks the status of background jobs */
       CheckJobs();

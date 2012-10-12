@@ -308,6 +308,11 @@ IsBuiltIn(char* cmd) {
  */
 static void
 RunBuiltInCmd(commandT* cmd) {
+  // Implementation of exit
+  if (strcmp(cmd->argv[0], "exit") == 0) {
+    return;
+  }
+
   // Implementation of cd 
   if (strcmp(cmd->argv[0], "cd") == 0) {
     if (cmd->argv[1] != NULL) {
