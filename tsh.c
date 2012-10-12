@@ -68,7 +68,11 @@ main(int argc, char *argv[])
     PrintPError("SIGTSTP");
 
   while (!forceExit) /* repeat forever */
-    {
+  {
+      char* prompt = getenv("PS1");
+      if (prompt != NULL) {
+	printf("%s", prompt);
+      }
       /* read command line */
       getCommandLine(&cmdLine, BUFSIZE);
       

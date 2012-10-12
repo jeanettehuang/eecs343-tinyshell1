@@ -68,7 +68,9 @@
 
 /************Global Variables*********************************************/
 
-#define NBUILTINCOMMANDS (sizeof BuiltInCommands / sizeof(char*))
+#define NBUILTINCOMMANDS (sizeof BuiltInCmds / sizeof(char*))
+
+char* BuiltInCmds[3] = {"echo","exit","cd"};
 
 typedef struct bgjob_l
 {
@@ -283,8 +285,13 @@ Exec(commandT* cmd, bool forceFork)
  * command.
  */
 static bool
-IsBuiltIn(char* cmd)
-{
+IsBuiltIn(char* cmd) {
+  int i;
+  for (i = 0; i < NBUILTINCOMMANDS; i++) {
+    if (strcmp(cmd, BuiltInCmds[i]) == 0) {
+      return TRUE;
+    }
+  }
   return FALSE;
 } /* IsBuiltIn */
 
@@ -300,8 +307,36 @@ IsBuiltIn(char* cmd)
  * Runs a built-in command.
  */
 static void
-RunBuiltInCmd(commandT* cmd)
-{
+RunBuiltInCmd(commandT* cmd) {
+  // Implementation of cd 
+  if (strcmp(cmd->argv[0], "cd") == 0) {
+    if (cmd->argv[1] != NULL) {
+      // cd error
+      if (chdir(cmd->argv[1]) == -1) {
+	perror("Error: cd failed");
+      }
+    }
+  }
+
+  // Implementation of echo
+  if (strcmp(cmd->argv[0], "echo") == 0) {
+    int i;
+    for (i = 1; i < cmd->argc; i++) {
+      // If we are echoing an environment var
+      if (cmd->argv[i][0] == '$') {
+	char* var = malloc(strlen(cmd->argv[i])*sizeof(char));
+	memcpy(var, cmd->argv[i] + sizeof(char), strlen(cmd->argv[i]) * sizeof(char));
+	printf("%s ", getenv(var));
+	free(var);
+      }
+      else {
+	printf("%s ", cmd->argv[i]);
+      }
+    }
+    printf("\n");
+    return;
+  }
+
 } /* RunBuiltInCmd */
 
 
