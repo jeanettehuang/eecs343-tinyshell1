@@ -285,7 +285,7 @@ ResolveExternalCmd(commandT* cmd) {
  */
 static void
 Exec(char* path, commandT* cmd, bool forceFork) {
-  /*if(forceFork) {
+  if(forceFork) {
     int status;
 
     // Create child process
@@ -312,56 +312,7 @@ Exec(char* path, commandT* cmd, bool forceFork) {
   }
   else {
     execv(path,cmd->argv);
-  }*/
-  int cpid;
-
-  if(!forceFork) {
-  // Stuff here later on for dealing with things that aren't force-forked.
-  } else {
-  sigset_t x;
-  sigemptyset (&x);
-  sigaddset(&x, SIGCHLD);
-  sigprocmask(SIG_BLOCK, &x, NULL);
-
-  if ((cpid = fork()) < 0){
-  perror("fork failed");
-  } else {
-  if (cpid == 0) { // child
-  setpgid(0, 0);
-
-  char* command = cmd->argv[0];
-
-  int starting = -1;
-  int i;
-  for (i = strlen(command); i >= 0; --i) {
-  if (command[i] == '/') {
-  starting = i;
-  break;
   }
-  }
-
-  if (starting != -1) {
-  char* commandName = malloc((strlen(command) - starting + 1) * sizeof(char));
-  memcpy(commandName, command + (starting + 1) * sizeof(char), (strlen(command) - starting + 1) * sizeof(char));
-  free(cmd->argv[0]);
-  cmd->argv[0] = commandName;
-  }
-
-
-  sigprocmask(SIG_UNBLOCK, &x, NULL);
-  execv(cmd->name, cmd->argv);
-  perror("exec failed");
-  } else { // parent
-  fgChildPid = cpid;
-  int* stat = 0;
-  waitpid(cpid, stat, 0);
-  fgChildPid = 0;
-  sigprocmask(SIG_UNBLOCK, &x, NULL);
-  }
-  }
-  }
-
-  free(cmd->name);
 } /* Exec */
 
 

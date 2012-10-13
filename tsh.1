@@ -1,19 +1,27 @@
 .\" Process this file with
 .\" groff -man -Tascii tsh.1
 .\"
-.TH TSH 1 "OCTOBER 2009" "NU EECS 343" "NU EECS 343 - Operating Systems - Fall 2009"
+.TH TSH 1 "OCTOBER 2012" "NU EECS 343" "NU EECS 343 - Operating Systems - Fall 2012"
 .SH NAME
 tsh \- A tiny shell
 .SH SYNOPSIS
 .B tsh
 .SH DESCRIPTION
 .B tsh
-description... Include the features that you implemented
+Supports the running of both built-in commands (e.g. cd, pwd, ...)  as well as external commands (e.g. ls)
 .SH BUILT-IN COMMANDS
 .IP exit
 Quit tsh
+.IP pwd
+Prints the current working directory
+.IP cd PATH
+Change the current working directory to PATH if PATH is included, else change the current working directory to HOME
 .SH DESIGN APPROACH
-Write about your design approach, challenges, and whether you went for
-the extra credit here.
+I followed the project skeleton/project handout specs as much as I could and filled out the skeleton methods.
+
+I added the following helper functions as well:
+(1) getCompleteFilePath takes an external command as its parameter and returns the full path of that command
+and (2) existsAndExecutable checks a given file at a particular location to see if it exists and is executable
+
 .SH AUTHOR
-Your names, netids and emails here
+Jeanette Huang, jyh286, jeanettehuang2009@u.northwestern.edu
