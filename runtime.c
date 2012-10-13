@@ -468,7 +468,7 @@ getCompleteFilePath(char* file) {
       // Otherwise see if it exists in any of the folders in our path.
         char* newPath = malloc(sizeof(char*)*PATH_MAX);
         strcpy(newPath, paths);
-        char* path = strtok(newPath, ",");
+        char* path = strtok(newPath, ":");
         while (path != NULL) {
           char* pathWithFilename = malloc(sizeof(char*)*PATH_MAX);
           strcpy(pathWithFilename, path);
@@ -478,7 +478,7 @@ getCompleteFilePath(char* file) {
             strcpy(res, pathWithFilename);
             inPath = TRUE;
           }
-          path = strtok(NULL, ",");
+          path = strtok(NULL, ":");
           free(pathWithFilename);
         }
         free(newPath);
