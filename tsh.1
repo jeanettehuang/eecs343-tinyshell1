@@ -8,14 +8,14 @@ tsh \- A tiny shell
 .B tsh
 .SH DESCRIPTION
 .B tsh
-Supports the running of both built-in commands (e.g. cd, pwd, ...)  as well as external commands (e.g. ls). Hitting Control+C kills a process.
+Supports the running of both built-in commands (e.g. cd, pwd, ...)  as well as external commands (e.g. ls). Also supports hitting Control + C to kill a process
 .SH BUILT-IN COMMANDS
 .IP exit
 Quit tsh
 .IP pwd
 Prints the current working directory
-.IP cd PATH
-Change the current working directory to PATH if PATH is included, else change the current working directory to HOME
+.IP cd
+Change the current working directory to PATH if PATH is included as an argument to cd, else change the current working directory to HOME
 .SH DESIGN APPROACH
 I followed the project skeleton/project handout specs as much as I could and filled out the skeleton methods.
 

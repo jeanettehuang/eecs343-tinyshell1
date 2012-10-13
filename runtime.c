@@ -262,13 +262,13 @@ static bool
 ResolveExternalCmd(commandT* cmd) {
   char* completeFilePath = getCompleteFilePath(cmd->name);
 
-  if (completeFilePath != NULL) {
-    cmd->name = completeFilePath;
-    return TRUE;
+  if (completeFilePath == NULL) {
+    free(completeFilePath);
+    return FALSE;
   }
 
-  free(completeFilePath);
-  return FALSE;
+  cmd->name = completeFilePath;
+  return TRUE;
 } /* ResolveExternalCmd */
 
 
@@ -393,10 +393,10 @@ RunBuiltInCmd(commandT* cmd) {
  getCurrentWorkingDir() {
   char* currentWorkingDir = malloc(sizeof(char*)*PATH_MAX);
 
-  /*if (getcwd(currentWorkingDir, PATH_MAX) == NULL) {
+  if (getcwd(currentWorkingDir, PATH_MAX) == NULL) {
     free(currentWorkingDir);
     return NULL;
-  }*/
+  }
 
   return getcwd(currentWorkingDir,PATH_MAX);
  } /* getCurrentWorkingDir*/
