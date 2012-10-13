@@ -438,7 +438,8 @@ RunBuiltInCmd(commandT* cmd) {
  *
  * Gets the current working directory
  */
- char* getCurrentWorkingDir() {
+ char*
+ getCurrentWorkingDir() {
   char* currentWorkingDir = malloc(sizeof(char*)*PATH_MAX);
 
   if (getcwd(currentWorkingDir, PATH_MAX) == NULL) {
@@ -458,7 +459,8 @@ RunBuiltInCmd(commandT* cmd) {
  *
  * Checks the file to see if it exists and is executable
  */
- static bool existsAndExecutable(char* file_path) {
+ static bool
+ existsAndExecutable(char* file_path) {
   struct stat file;
   if (stat(file_path, &file) == 0) {
     if ((access(file_path, X_OK) == 0) && S_ISREG(file.st_mode)) {
@@ -474,7 +476,8 @@ RunBuiltInCmd(commandT* cmd) {
  * arguments: char* file: the file whose full path we want to find
  *
  */
-char* getCompleteFilePath(char* file) {
+char*
+getCompleteFilePath(char* file) {
 
   bool inPath = FALSE;
   char* paths = getenv("PATH");
@@ -545,6 +548,21 @@ char* getCompleteFilePath(char* file) {
 
 } /* getCompleteFilePath */
 
+/*
+ * StopFgProc
+ *
+ * arguments: none
+ *
+ * returns: none
+ *
+ * If there is a fg process group, StopFgProc will stop it
+ */
+  void
+  StopFgProc() {
+    if (fgChildPid != 0) {
+      kill((fgChildPid * -1), SIGINT);
+    }
+  }
 /*
  * CheckJobs
  *
