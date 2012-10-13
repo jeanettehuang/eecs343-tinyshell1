@@ -71,7 +71,7 @@
 
 #define NBUILTINCOMMANDS (sizeof BuiltInCmds / sizeof(char*))
 
-char* BuiltInCmds[4] = {"echo","pwd","exit","cd"};
+char* BuiltInCmds[3] = {"pwd","exit","cd"};
 
 typedef struct bgjob_l
 {
@@ -285,7 +285,7 @@ ResolveExternalCmd(commandT* cmd) {
  */
 static void
 Exec(char* path, commandT* cmd, bool forceFork) {
-  if(forceFork) {
+  /*if(forceFork) {
     int status;
 
     // Create child process
@@ -312,7 +312,56 @@ Exec(char* path, commandT* cmd, bool forceFork) {
   }
   else {
     execv(path,cmd->argv);
+  }*/
+  int cpid;
+
+  if(!forceFork) {
+  // Stuff here later on for dealing with things that aren't force-forked.
+  } else {
+  sigset_t x;
+  sigemptyset (&x);
+  sigaddset(&x, SIGCHLD);
+  sigprocmask(SIG_BLOCK, &x, NULL);
+
+  if ((cpid = fork()) < 0){
+  perror("fork failed");
+  } else {
+  if (cpid == 0) { // child
+  setpgid(0, 0);
+
+  char* command = cmd->argv[0];
+
+  int starting = -1;
+  int i;
+  for (i = strlen(command); i >= 0; --i) {
+  if (command[i] == '/') {
+  starting = i;
+  break;
   }
+  }
+
+  if (starting != -1) {
+  char* commandName = malloc((strlen(command) - starting + 1) * sizeof(char));
+  memcpy(commandName, command + (starting + 1) * sizeof(char), (strlen(command) - starting + 1) * sizeof(char));
+  free(cmd->argv[0]);
+  cmd->argv[0] = commandName;
+  }
+
+
+  sigprocmask(SIG_UNBLOCK, &x, NULL);
+  execv(cmd->name, cmd->argv);
+  perror("exec failed");
+  } else { // parent
+  fgChildPid = cpid;
+  int* stat = 0;
+  waitpid(cpid, stat, 0);
+  fgChildPid = 0;
+  sigprocmask(SIG_UNBLOCK, &x, NULL);
+  }
+  }
+  }
+
+  free(cmd->name);
 } /* Exec */
 
 
@@ -363,88 +412,21 @@ RunBuiltInCmd(commandT* cmd) {
     char cwd[256];
     getcwd(cwd, 256);
     Print(cwd);
+    return;
   }
 
   // Implementation of cd 
   if (strcmp(cmd->argv[0], "cd") == 0) {
-    // No arguments given to cd, chdir home dir
-    if (cmd->argc == 1) {
+    if (cmd->argc == 1) { // No args given, chdir to home
       chdir(getenv("HOME"));
     }
     else if (cmd->argc == 2) {
-      char path[1024];
-      char updatedpath[1024];
-      int first = 0;
-      int second = 0;
-
-      getcwd(path,256);
-
-      // Arg given was ~, looking for home dir
-      if (cmd->argv[1][0] == '~') {
-        chdir(getenv("HOME"));
-      }
-      // Arg given to cd was not an absolute path, so just
-      // change dir to current path concatenated with /arg
-      if ((cmd->argv)[1][0] != '.' && (cmd->argv)[1][0] != '/') {
-        strcat(path, "/");
-        strcat(path,cmd->argv[1]);
-        chdir(path);
-      }
-      // We need to go up a dir
-      while(cmd->argv[1][first] == '.' && cmd->argv[1][second] == '.') {
-        int isslash = 0;
-        int pos = strlen(path)-1;
-        for(; pos >= 0; pos--) {
-          if(!isslash) {
-          // We currently at a slash in our path
-            if(path[pos] == '/') {
-              updatedpath[pos] = 0;
-              isslash = 1;
-            }
-          }
-        else {
-          updatedpath[pos] = path[pos];
-        }
-      }
-      chdir(updatedpath);
-      if(second+1 >= strlen(cmd->argv[1])) {
-        break;
-      }
-      if(cmd->argv[1][second+1] == '/') {
-        first += 3;
-        second += 3;
-      }
-      else {
-        break;
-      }
-      strcpy(path, updatedpath);
-      }
+      chdir(cmd->argv[1]);
     }
-    // cd given more than one argument
     else {
-      Print("Error: cd has too many arguments");
+      Print("Error: cd failure");
     }
   }
-
-  // Implementation of echo
-  if (strcmp(cmd->argv[0], "echo") == 0) {
-    int i;
-    for (i = 1; i < cmd->argc; i++) {
-      // If we are echoing an environment var
-      if (cmd->argv[i][0] == '$') {
-	char* var = malloc(strlen(cmd->argv[i])*sizeof(char));
-	memcpy(var, cmd->argv[i] + sizeof(char), strlen(cmd->argv[i]) * sizeof(char));
-	printf("%s ", getenv(var));
-	free(var);
-      }
-      else {
-	printf("%s ", cmd->argv[i]);
-      }
-    }
-    printf("\n");
-    return;
-  }
-
 } /* RunBuiltInCmd */
 
 /*
