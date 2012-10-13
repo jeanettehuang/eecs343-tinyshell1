@@ -310,9 +310,7 @@ Exec(char* path, commandT* cmd, bool forceFork) {
       fflush(stdout);
     }
   }
-  else {
-    execv(path,cmd->argv);
-  }
+  free(cmd->name);
 } /* Exec */
 
 
@@ -395,13 +393,15 @@ RunBuiltInCmd(commandT* cmd) {
  getCurrentWorkingDir() {
   char* currentWorkingDir = malloc(sizeof(char*)*PATH_MAX);
 
-  if (getcwd(currentWorkingDir, PATH_MAX) == NULL) {
+  /*if (getcwd(currentWorkingDir, PATH_MAX) == NULL) {
     free(currentWorkingDir);
     return NULL;
-  }
+  }*/
 
-  return currentWorkingDir;
+  return getcwd(currentWorkingDir,PATH_MAX);
  } /* getCurrentWorkingDir*/
+
+
 
 /* 
  * existsAndExecutable
@@ -422,6 +422,8 @@ RunBuiltInCmd(commandT* cmd) {
   }
   return FALSE;
  } /*existsandExecutable*/
+
+
 
 /*
  * getCompleteFilePath
