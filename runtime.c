@@ -451,7 +451,7 @@ getCompleteFilePath(char* file) {
     strcat(homeDirPath, "/");
     strcat(homeDirPath, file);
     if (existsAndExecutable(homeDirPath)) {
-      strcpy(result, homeDirPath);
+      strcpy(res, homeDirPath);
       inPath = TRUE;
     } else {
       // Check if file exists in our current dir
@@ -461,7 +461,7 @@ getCompleteFilePath(char* file) {
       strcat(cwdWithFilename, "/");
       strcat(cwdWithFilename, file);
       if (existsAndExecutable(cwdWithFilename)) {
-        strcpy(result, cwdWithFilename);
+        strcpy(res, cwdWithFilename);
         inPath = TRUE;
       } 
       else {
@@ -475,7 +475,7 @@ getCompleteFilePath(char* file) {
           strcat(pathWithFilename, "/");
           strcat(pathWithFilename, file);
           if (existsAndExecutable(pathWithFilename)) {
-            strcpy(result, pathWithFilename);
+            strcpy(res, pathWithFilename);
             inPath = TRUE;
           }
           path = strtok(NULL, ",");
@@ -490,13 +490,13 @@ getCompleteFilePath(char* file) {
   }
 
   if (inPath) {
-    return result;
+    return res;
   } 
   else {
-    strcpy(result, "line 1: ");
-    strcat(result, file);
-    PrintPError(result);
-    free(result);
+    strcpy(res, "line 1: ");
+    strcat(res, file);
+    PrintPError(res);
+    free(res);
     return NULL;
   }
 
