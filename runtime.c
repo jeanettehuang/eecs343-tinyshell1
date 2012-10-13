@@ -107,7 +107,7 @@ IsBuiltIn(char*);
 /* checks whether a file exists and is executable */
 static bool
 existsAndExecutable(char*);
-/* Parses the PATH env var pathnames returns the complete file path for a file */
+/* returns the complete file path for a command */
 char*
 getCompleteFilePath(char*);
 /************External Declaration*****************************************/
@@ -374,11 +374,13 @@ RunBuiltInCmd(commandT* cmd) {
     else if (cmd->argc == 2) {
       chdir(cmd->argv[1]);
     }
-    else {
+    else { // More than two args given, error
       Print("Error: cd failure");
     }
   }
 } /* RunBuiltInCmd */
+
+
 
 /*
  * getCurrentWorkingDir
@@ -432,13 +434,13 @@ getCompleteFilePath(char* file) {
 
   bool inPath = FALSE;
   char* paths = getenv("PATH");
-  char* result = malloc(sizeof(char*)*PATH_MAX);
+  char* res = malloc(sizeof(char*)*PATH_MAX);
 
   // Path is an absolute path, do not need to manip path to look up file
   if (file[0] == '/') {
     if (existsAndExecutable(file)) {
-       strcpy(result, file);
-        inPath = TRUE;
+       strcpy(res, file);
+       inPath = TRUE;
     }
   } 
   else {
@@ -466,7 +468,7 @@ getCompleteFilePath(char* file) {
       // Otherwise see if it exists in any of the folders in our path.
         char* newPath = malloc(sizeof(char*)*PATH_MAX);
         strcpy(newPath, paths);
-        char* path = strtok(newPath, ":");
+        char* path = strtok(newPath, ",");
         while (path != NULL) {
           char* pathWithFilename = malloc(sizeof(char*)*PATH_MAX);
           strcpy(pathWithFilename, path);
@@ -476,7 +478,7 @@ getCompleteFilePath(char* file) {
             strcpy(result, pathWithFilename);
             inPath = TRUE;
           }
-          path = strtok(NULL, ":");
+          path = strtok(NULL, ",");
           free(pathWithFilename);
         }
         free(newPath);
@@ -491,13 +493,16 @@ getCompleteFilePath(char* file) {
     return result;
   } 
   else {
-    strcpy(result, file);
+    strcpy(result, "line 1: ");
+    strcat(result, file);
     PrintPError(result);
     free(result);
     return NULL;
   }
 
 } /* getCompleteFilePath */
+
+
 
 /*
  * StopFgProc
@@ -508,12 +513,15 @@ getCompleteFilePath(char* file) {
  *
  * If there is a fg process group, StopFgProc will stop it
  */
-  void
-  StopFgProc() {
-    if (fgChildPid != 0) {
-      kill((fgChildPid * -1), SIGINT);
-    }
+ void
+ StopFgProc() {
+  if (fgChildPid != 0) {
+    kill((fgChildPid * -1), SIGINT);
   }
+ }
+
+
+
 /*
  * CheckJobs
  *
